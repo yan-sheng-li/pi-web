@@ -117,6 +117,8 @@ export const enLocale: LocalePlugin = {
     "git.loadingCommit": "Loading commit...",
     "git.noCommits": "No commits yet",
     "git.noDiffContent": "No diff content",
+    "git.file": "file changed",
+    "git.files": "files changed",
     "git.close": "Close",
     "sidebar.loading": "Loading...",
     "sidebar.noSessions": "No sessions found",

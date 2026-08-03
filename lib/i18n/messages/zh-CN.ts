@@ -117,6 +117,8 @@ export const zhCNLocale: LocalePlugin = {
     "git.loadingCommit": "加载提交...",
     "git.noCommits": "暂无提交",
     "git.noDiffContent": "无差异内容",
+    "git.file": "个文件变更",
+    "git.files": "个文件变更",
     "git.close": "关闭",
     "sidebar.loading": "加载中...",
     "sidebar.noSessions": "未找到会话",

@@ -10,7 +10,7 @@ import {
   joinFilePath,
   normalizeFilePathSlashes,
 } from "@/lib/file-paths";
-import type { GitFileStatus, GitFileStatusKind, GitStatusResponse } from "@/lib/git-types";
+import type { GitCommitInfo, GitFileStatus, GitFileStatusKind, GitStatusResponse } from "@/lib/git-types";
 import { useI18n } from "@/hooks/useI18n";
 import { GitCommitsPanel } from "./GitCommitsPanel";
 type Translate = ReturnType<typeof useI18n>["t"];
@@ -41,6 +41,7 @@ interface Props {
   changesCollapsed: boolean;
   onChangesCountChange?: (count: number) => void;
   gitRefreshKey?: number;
+  onOpenCommit?: (commit: GitCommitInfo) => void;
 }
 
 export interface FileExplorerHandle {
@@ -526,6 +527,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
   changesCollapsed,
   onChangesCountChange,
   gitRefreshKey,
+  onOpenCommit,
 }, ref) {
   const { t } = useI18n();
   const [roots, setRoots] = useState<FileNode[]>([]);
@@ -877,7 +879,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
             {t("git.commits")}
           </button>
           {!commitsCollapsed && (
-            <GitCommitsPanel cwd={cwd} refreshKey={gitRefreshKey ?? refreshKey ?? 0} />
+            <GitCommitsPanel cwd={cwd} refreshKey={gitRefreshKey ?? refreshKey ?? 0} onOpenCommit={onOpenCommit ?? (() => {})} />
           )}
         </div>
       )}

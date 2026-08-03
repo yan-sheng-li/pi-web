@@ -6,6 +6,7 @@ import { useGlobalKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { SessionSidebar } from "./SessionSidebar";
 import { ChatWindow } from "./ChatWindow";
 import { FileViewer } from "./FileViewer";
+import { GitCommitView } from "./GitCommitView";
 import { TabBar, type Tab } from "./TabBar";
 import { ModelsConfig } from "./ModelsConfig";
 import { SkillsConfig } from "./SkillsConfig";
@@ -33,6 +34,7 @@ import {
   SIDEBAR_MIN_WIDTH,
 } from "@/lib/panel-layout";
 import type { SessionInfo, SessionTreeNode } from "@/lib/types";
+import type { GitCommitInfo } from "@/lib/git-types";
 import type { ProjectTrustStatus } from "@/lib/api-types";
 import type { ChatInputHandle } from "./ChatInput";
 import type { SessionStatsInfo } from "@/lib/pi-types";
@@ -522,10 +524,28 @@ export function AppShell() {
     if (isMobile) setSidebarOpen(false);
   }, [isMobile]);
 
+  const handleOpenCommit = useCallback((commit: GitCommitInfo) => {
+    const tabId = `git-commit:${commit.hash}`;
+    const label = `${commit.shortHash} · ${commit.subject.split("\n")[0].slice(0, 24)}`;
+    setFileTabs((prev) => {
+      if (prev.some((t) => t.id === tabId)) return prev;
+      return [...prev, {
+        id: tabId,
+        label,
+        kind: "git-commit",
+        commitHash: commit.hash,
+        commitSubject: commit.subject,
+        cwd: activeCwd ?? undefined,
+      }];
+    });
+    setActiveFileTabId(tabId);
+    setRightPanelOpen(true);
+    if (isMobile) setSidebarOpen(false);
+  }, [activeCwd, isMobile]);
+
   const handleOpenLinkedFile = useCallback((filePath: string) => {
     handleOpenFile(filePath, getFileName(filePath), { sourceSessionId: selectedSession?.id ?? null });
   }, [handleOpenFile, selectedSession?.id]);
-
   const handleCloseFileTab = useCallback((tabId: string) => {
     setFileTabs((prev) => {
       const next = prev.filter((t) => t.id !== tabId);
@@ -629,6 +649,7 @@ export function AppShell() {
         selectedCwd={selectedSession?.cwd ?? newSessionCwd ?? null}
         onCwdChange={handleCwdChange}
         onOpenFile={handleOpenFile}
+        onOpenCommit={handleOpenCommit}
         explorerRefreshKey={explorerRefreshKey}
         onExplorerRefresh={handleExplorerRefresh}
         onAtMention={handleAtMention}
@@ -1590,7 +1611,12 @@ export function AppShell() {
 
         {/* File content */}
         <div style={{ flex: 1, overflow: "hidden", paddingBottom: "env(safe-area-inset-bottom)" }}>
-          {activeFileTab?.filePath ? (
+          {activeFileTab?.kind === "git-commit" ? (
+            <GitCommitView
+              cwd={activeFileTab.cwd ?? activeCwd ?? ""}
+              commitHash={activeFileTab.commitHash ?? ""}
+            />
+          ) : activeFileTab?.filePath ? (
             <FileViewer
               filePath={activeFileTab.filePath}
               cwd={activeCwd ?? undefined}

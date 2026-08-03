@@ -7,9 +7,13 @@ import { useI18n } from "@/hooks/useI18n";
 export interface Tab {
   id: string;
   label: string;
-  filePath: string;
+  kind?: "file" | "git-commit";
+  filePath?: string;
   sourceSessionId?: string | null;
   initialDisplayMode?: "source" | "preview" | "diff";
+  cwd?: string;
+  commitHash?: string;
+  commitSubject?: string;
 }
 
 interface Props {
@@ -70,7 +74,19 @@ export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab }: Props) {
             }}
           >
             <span style={{ flexShrink: 0, opacity: isActive ? 1 : 0.7, display: "flex", alignItems: "center" }}>
-              {getFileIcon(tab.label, 13)}
+              {tab.kind === "git-commit" ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="6" cy="6" r="3" />
+                  <circle cx="6" cy="18" r="3" />
+                  <path d="M6 9v6" />
+                  <path d="M6 9c0-1.5 2-2 4-2" />
+                  <path d="M10 7h6a2 2 0 0 1 2 2" />
+                  <path d="M6 15c0-1.5 2-2 4-2" />
+                  <path d="M10 17h6a2 2 0 0 0 2-2" />
+                </svg>
+              ) : (
+                getFileIcon(tab.label, 13)
+              )}
             </span>
             <span
               style={{
@@ -79,7 +95,7 @@ export function TabBar({ tabs, activeTabId, onSelectTab, onCloseTab }: Props) {
                 flex: 1,
                 fontWeight: isActive ? 500 : 400,
               }}
-              title={tab.filePath}
+              title={tab.commitSubject ?? tab.filePath ?? tab.label}
             >
               {tab.label}
             </span>
