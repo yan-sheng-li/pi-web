@@ -12,6 +12,7 @@ import {
 } from "@/lib/file-paths";
 import type { GitFileStatus, GitFileStatusKind, GitStatusResponse } from "@/lib/git-types";
 import { useI18n } from "@/hooks/useI18n";
+import { GitCommitsPanel } from "./GitCommitsPanel";
 type Translate = ReturnType<typeof useI18n>["t"];
 
 interface FileEntry {
@@ -39,6 +40,7 @@ interface Props {
   onUploadBusyChange?: (busy: boolean) => void;
   changesCollapsed: boolean;
   onChangesCountChange?: (count: number) => void;
+  gitRefreshKey?: number;
 }
 
 export interface FileExplorerHandle {
@@ -523,6 +525,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
   onUploadBusyChange,
   changesCollapsed,
   onChangesCountChange,
+  gitRefreshKey,
 }, ref) {
   const { t } = useI18n();
   const [roots, setRoots] = useState<FileNode[]>([]);
@@ -533,6 +536,8 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
   const [highlightedPaths, setHighlightedPaths] = useState<Set<string>>(new Set());
   const [gitFiles, setGitFiles] = useState<GitFileStatus[]>([]);
   const [gitLineStats, setGitLineStats] = useState({ additions: 0, deletions: 0 });
+  const [isGitRepository, setIsGitRepository] = useState(false);
+  const [commitsCollapsed, setCommitsCollapsed] = useState(true);
   const [uploadPhase, setUploadPhase] = useState<UploadPhase>("idle");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -698,6 +703,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
     fetchGitStatus(cwd)
       .then((status) => {
         if (!cancelled) {
+          setIsGitRepository(status.isGitRepository);
           setGitFiles(status.isGitRepository ? status.files : []);
           setGitLineStats(status.isGitRepository
             ? { additions: status.additions, deletions: status.deletions }
@@ -706,6 +712,7 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
       })
       .catch(() => {
         if (!cancelled) {
+          setIsGitRepository(false);
           setGitFiles([]);
           setGitLineStats({ additions: 0, deletions: 0 });
         }
@@ -844,6 +851,34 @@ export const FileExplorer = forwardRef<FileExplorerHandle, Props>(function FileE
             ))}
           </div>
         )}
+        </div>
+      )}
+
+      {isGitRepository && (
+        <div style={{ padding: "0 4px 2px" }}>
+          <button
+            type="button"
+            onClick={() => setCommitsCollapsed((v) => !v)}
+            aria-expanded={!commitsCollapsed}
+            style={{
+              display: "flex", alignItems: "center", gap: 6, width: "100%", height: 26,
+              padding: "0 10px", background: "none", border: "none", cursor: "pointer",
+              color: "var(--text-muted)", fontSize: 11, fontWeight: 600,
+              letterSpacing: "0.05em", textTransform: "uppercase", textAlign: "left",
+            }}
+          >
+            <svg
+              width="9" height="9" viewBox="0 0 10 10" fill="none"
+              stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+              style={{ transform: commitsCollapsed ? "none" : "rotate(90deg)", transition: "transform 0.15s", flexShrink: 0 }}
+            >
+              <polyline points="3 2 7 5 3 8" />
+            </svg>
+            {t("git.commits")}
+          </button>
+          {!commitsCollapsed && (
+            <GitCommitsPanel cwd={cwd} refreshKey={gitRefreshKey ?? refreshKey ?? 0} />
+          )}
         </div>
       )}
 

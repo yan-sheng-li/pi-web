@@ -27,3 +27,41 @@ export interface GitFileDiffResponse {
   status?: GitFileStatusKind;
   patch?: string;
 }
+
+export interface GitCommitInfo {
+  hash: string;
+  shortHash: string;
+  subject: string;
+  authorName: string;
+  authorEmail: string;
+  authorDate: string;
+  refs: string;
+}
+
+export interface GitCommitFileChange {
+  filePath: string;
+  status: GitFileStatusKind;
+  additions: number;
+  deletions: number;
+}
+
+export interface GitCommitDetail {
+  hash: string;
+  shortHash: string;
+  subject: string;
+  body: string;
+  authorName: string;
+  authorEmail: string;
+  authorDate: string;
+  refs: string;
+  parentCount: number;
+  files: GitCommitFileChange[];
+  patch: string;
+}
+
+export interface GitLogResponse {
+  isGitRepository: boolean;
+  repositoryRoot: string | null;
+  branch: string | null;
+  commits: GitCommitInfo[];
+}
