@@ -119,6 +119,7 @@ export const enLocale: LocalePlugin = {
     "git.noDiffContent": "No diff content",
     "git.file": "file changed",
     "git.files": "files changed",
+    "git.viewAll": "View all",
     "git.close": "Close",
     "sidebar.loading": "Loading...",
     "sidebar.noSessions": "No sessions found",

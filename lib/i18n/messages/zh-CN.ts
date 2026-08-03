@@ -119,6 +119,7 @@ export const zhCNLocale: LocalePlugin = {
     "git.noDiffContent": "无差异内容",
     "git.file": "个文件变更",
     "git.files": "个文件变更",
+    "git.viewAll": "查看全部",
     "git.close": "关闭",
     "sidebar.loading": "加载中...",
     "sidebar.noSessions": "未找到会话",

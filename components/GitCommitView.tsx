@@ -83,11 +83,13 @@ export function GitCommitView({ cwd, commitHash }: GitCommitViewProps) {
   const { t } = useI18n();
   const [detail, setDetail] = useState<GitCommitDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setDetail(null);
     setError(null);
+    setSelectedFile(null);
     fetchCommitDetail(cwd, commitHash)
       .then((d) => { if (!cancelled) setDetail(d); })
       .catch((e) => { if (!cancelled) setError(e instanceof Error ? e.message : String(e)); });
@@ -101,6 +103,9 @@ export function GitCommitView({ cwd, commitHash }: GitCommitViewProps) {
   if (!detail) {
     return <div style={{ padding: "16px", fontSize: 12, color: "var(--text-dim)" }}>{t("git.loadingCommit")}</div>;
   }
+
+  const activeFile = selectedFile ? detail.files.find((f) => f.filePath === selectedFile) ?? null : null;
+  const activePatch = activeFile?.patch ?? detail.patch;
 
   return (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -130,28 +135,50 @@ export function GitCommitView({ cwd, commitHash }: GitCommitViewProps) {
               {detail.files.length} {detail.files.length === 1 ? t("git.file") : t("git.files")}
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {detail.files.map((file) => (
-                <span
-                  key={file.filePath}
-                  title={file.filePath}
-                  style={{
-                    display: "inline-flex", alignItems: "center", gap: 6,
-                    fontSize: 11, fontFamily: "var(--font-mono)", padding: "2px 8px", borderRadius: 4,
-                    background: "var(--bg-selected)", color: "var(--text-muted)", whiteSpace: "nowrap",
-                  }}
-                >
-                  <span style={{ color: FILE_STATUS_COLORS[file.status] ?? "var(--text-dim)", width: 12, flexShrink: 0 }}>
-                    {file.status === "added" ? "A" : file.status === "deleted" ? "D" : file.status === "renamed" ? "R" : "M"}
-                  </span>
-                  {file.filePath}
-                </span>
-              ))}
+              {detail.files.map((file) => {
+                const isActive = file.filePath === selectedFile;
+                return (
+                  <button
+                    key={file.filePath}
+                    type="button"
+                    title={file.filePath}
+                    onClick={() => setSelectedFile((cur) => (cur === file.filePath ? null : file.filePath))}
+                    aria-pressed={isActive}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      fontSize: 11, fontFamily: "var(--font-mono)", padding: "2px 8px", borderRadius: 4,
+                      background: isActive ? "var(--bg-selected)" : "var(--bg-panel)",
+                      border: isActive ? "1px solid var(--accent)" : "1px solid transparent",
+                      color: isActive ? "var(--text)" : "var(--text-muted)",
+                      whiteSpace: "nowrap", cursor: "pointer",
+                      transition: "background 0.1s, border-color 0.1s",
+                    }}
+                  >
+                    <span style={{ color: FILE_STATUS_COLORS[file.status] ?? "var(--text-dim)", width: 12, flexShrink: 0 }}>
+                      {file.status === "added" ? "A" : file.status === "deleted" ? "D" : file.status === "renamed" ? "R" : "M"}
+                    </span>
+                    {file.filePath}
+                  </button>
+                );
+              })}
             </div>
+            {selectedFile && (
+              <button
+                type="button"
+                onClick={() => setSelectedFile(null)}
+                style={{
+                  marginTop: 8, border: "none", background: "none", color: "var(--accent)",
+                  cursor: "pointer", fontSize: 11, padding: 0,
+                }}
+              >
+                {t("git.viewAll")}
+              </button>
+            )}
           </div>
         )}
       </div>
       <div style={{ flex: 1, overflow: "auto", padding: "12px 16px", minHeight: 0 }}>
-        <DiffLineView patch={detail.patch} t={t} />
+        <DiffLineView patch={activePatch} t={t} />
       </div>
     </div>
   );

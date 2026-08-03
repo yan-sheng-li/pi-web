@@ -43,6 +43,7 @@ export interface GitCommitFileChange {
   status: GitFileStatusKind;
   additions: number;
   deletions: number;
+  patch?: string;
 }
 
 export interface GitCommitDetail {

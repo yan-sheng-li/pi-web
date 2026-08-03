@@ -210,6 +210,11 @@ export async function getGitCommitDetail(cwd: string, hash: string): Promise<Git
     patch = "";
   }
 
+  const filePatches = splitPatchByFile(patch);
+  for (const file of files) {
+    file.patch = filePatches.get(file.filePath);
+  }
+
   return {
     hash: meta.hash,
     shortHash: meta.hash.slice(0, 7),
@@ -223,6 +228,21 @@ export async function getGitCommitDetail(cwd: string, hash: string): Promise<Git
     files,
     patch,
   };
+}
+
+function splitPatchByFile(patch: string): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!patch) return map;
+  const rawSections = patch.split(/\ndiff --git /);
+  for (const section of rawSections) {
+    if (!section) continue;
+    const header = section.startsWith("diff --git ") ? section : `diff --git ${section}`;
+    const pathMatch = header.match(/diff --git a\/(.+?) b\//);
+    if (!pathMatch) continue;
+    const gitPath = toGitPath(pathMatch[1]);
+    map.set(gitPath, header.trimEnd());
+  }
+  return map;
 }
 
 function parseNumstat(output: string, statusByPath: Map<string, GitFileStatusKind>): GitCommitFileChange[] {
