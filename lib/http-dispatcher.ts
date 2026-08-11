@@ -44,35 +44,35 @@ export async function configureHttpDispatcher(
   const undici = await import("undici");
 
   const undiciApi = undici as unknown as {
-    Client: new (origin: string | URL, opts: Record<string, unknown>) => unknown;
-    Pool: new (origin: string | URL, opts: { connections?: number; factory: (origin: string | URL, opts: unknown) => unknown }) => unknown;
-    EnvHttpProxyAgent: new (opts: Record<string, unknown>) => unknown;
-    setGlobalDispatcher(dispatcher: unknown): void;
+    Client: new (origin: string | URL, opts: Record<string, unknown>) => EventEmitter;
+    Pool: new (origin: string | URL, opts: { connections?: number; factory: (origin: string | URL, opts: unknown) => EventEmitter }) => EventEmitter;
+    EnvHttpProxyAgent: new (opts: Record<string, unknown>) => EventEmitter;
+    setGlobalDispatcher(dispatcher: EventEmitter): void;
     install?(): void;
   };
 
-  function createClient(origin: string | URL, options: unknown): unknown {
+  function createClient(origin: string | URL, options: unknown): EventEmitter {
     const client = new undiciApi.Client(origin, options as Record<string, unknown>);
-    return withUndiciErrorListener(client);
+    return withUndiciErrorListener(client) as EventEmitter;
   }
 
-  function createPool(origin: string | URL, options: { connections?: number }): unknown {
+  function createPool(origin: string | URL, options: { connections?: number }): EventEmitter {
     const pool = new undiciApi.Pool(origin, {
       ...options,
       factory: (o: string | URL, opts: unknown) => createClient(o, opts),
     });
-    return withUndiciErrorListener(pool);
+    return withUndiciErrorListener(pool) as EventEmitter;
   }
 
   const agent = new undiciApi.EnvHttpProxyAgent({
     allowH2: false,
     bodyTimeout: normalizedTimeoutMs,
     headersTimeout: normalizedTimeoutMs,
-    clientFactory: (origin: string | URL, opts: unknown) => createClient(origin, opts) as never,
-    factory: (origin: string | URL, opts: unknown) => createPool(origin, opts as { connections?: number }) as never,
+    clientFactory: (origin: string | URL, opts: unknown) => createClient(origin, opts),
+    factory: (origin: string | URL, opts: unknown) => createPool(origin, opts as { connections?: number }),
   });
 
-  const dispatcher = withUndiciErrorListener(agent);
+  const dispatcher = withUndiciErrorListener(agent) as EventEmitter;
   undiciApi.setGlobalDispatcher(dispatcher);
 
   if (globalThis.fetch === originalGlobalFetch) {
